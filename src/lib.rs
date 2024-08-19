@@ -1,3 +1,7 @@
+use std::{ops::Add, time::{Duration, SystemTime, UNIX_EPOCH}};
+
+use state_machine::{Input, State};
+
 pub mod state_machine;
 pub mod bank_api;
 pub mod hw_api;
@@ -8,6 +12,8 @@ struct AtmController {
     authentication: String,
     requested_cash_input_amount: u64,
     requested_cash_output_amount: u64,
+    cash_input_counter: u64,
+    user_interaction_timestamp: Duration,
     error_code: String,
 }
 
@@ -18,7 +24,35 @@ impl AtmController {
             authentication: String::new(),
             requested_cash_input_amount: 0,
             requested_cash_output_amount: 0,
+            cash_input_counter: 0,
+            user_interaction_timestamp: Duration::new(0,0),
             error_code: String::new(),
+        }
+    }
+
+    pub fn reset_user_interaction_timestamp(&mut self) {
+        self.user_interaction_timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    }
+
+    pub fn request_deposit(&mut self, amount: u64) {
+        self.requested_cash_output_amount = amount;
+        self.state_machine.consume(&Input::RequestDeposit).unwrap();
+    }
+
+    pub fn request_withdrawal(&mut self, amount: u64) {
+        self.requested_cash_input_amount = amount;
+        self.state_machine.consume(&Input::RequestWithdrawal).unwrap();
+    }
+
+    pub fn machine_loop_run(&mut self) {
+        match self.state_machine.state() {
+            State::WaitingPinNumber | State::Authenticated | State::WaitingCashInput => {
+                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+                if self.user_interaction_timestamp+Duration::new(30,0) < now {
+                    self.state_machine.consume(&Input::UserInteractionTimeout).unwrap();
+                }
+            }
+            _ => {},
         }
     }
 }

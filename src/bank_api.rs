@@ -1,4 +1,4 @@
-use crate::AtmController;
+use crate::{state_machine::Input, AtmController};
 
 
 pub struct BalanceRow {
@@ -17,8 +17,10 @@ impl AtmController {
         self.error_code = String::from("Wrong Pin Number");
         // OR
         self.error_code = String::from("Some Error Code from Bank API");
+        self.state_machine.consume(&Input::PinFailed).unwrap();
         // OR
         self.authentication = String::from("Some Auth from Bank API"); // auth string
+        self.state_machine.consume(&Input::PinVerified).unwrap();
         todo!();
     }
 
