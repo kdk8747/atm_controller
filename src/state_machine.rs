@@ -12,7 +12,7 @@ pub enum Input {
     Unsuccessful,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum State {
     FatalError,
     Idle,

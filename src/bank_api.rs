@@ -1,30 +1,34 @@
-use crate::{state_machine::Input, AtmController};
+use crate::AtmController;
 
 
 pub struct BalanceRow {
-    datetime_iso8601: String,
-    deposit: u64,
-    withdrawal: u64,
-    balance: u64,
+    pub datetime_iso8601: String,
+    pub deposit: u64,
+    pub withdrawal: u64,
+    pub balance: u64,
 }
 
 impl AtmController {
 
-    fn get_authentication(&mut self, _pin: &String) -> bool {
+    pub fn get_authentication(&mut self) -> bool {
+        // TODO: async
+        // using arg
+        //self.pin.clone();
         // via bank system API
         self.error_code = String::from("Request Timeout");
         // OR
         self.error_code = String::from("Wrong Pin Number");
         // OR
         self.error_code = String::from("Some Error Code from Bank API");
-        self.state_machine.consume(&Input::PinFailed).unwrap();
+        //self.state_machine.consume(&Input::PinFailed).unwrap();
         // OR
         self.authentication = String::from("Some Auth from Bank API"); // auth string
-        self.state_machine.consume(&Input::PinVerified).unwrap();
+        //self.state_machine.consume(&Input::PinVerified).unwrap();
         todo!();
     }
 
-    pub async fn get_account_no(&mut self) -> Vec<String> {
+    pub fn get_account_no(&mut self) -> Vec<String> {
+        // TODO: async
         let _auth = &self.authentication;
         // via bank system API
         self.error_code = String::from("Request Timeout");
@@ -36,7 +40,8 @@ impl AtmController {
         todo!();
     }
 
-    pub async fn get_account_balance(&mut self, _account_no: &String) -> Vec<BalanceRow> {
+    pub fn get_account_balance(&mut self, _account_no: &String) -> Vec<BalanceRow> {
+        // TODO: async
         let _auth = &self.authentication;
         // via bank system API
         self.error_code = String::from("Request Timeout");

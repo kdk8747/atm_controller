@@ -1,6 +1,6 @@
 use crate::{state_machine::Input, AtmController};
 
-enum HwEvent {
+pub enum HwEvent {
     CardInserted,
     CardEjected,
     CardEjectionTimeout,
@@ -9,36 +9,55 @@ enum HwEvent {
     CashCountFailed,
     CashEjected,
     CashEjectionTimeout,
+    UserInteractionTimeout,
+}
+
+pub enum HwEventArg {
+    Count(u64),
+    Pin(String),
+    None(),
+}
+
+impl HwEventArg {
+    fn pin(self) -> Option<String> {
+        match self {
+            HwEventArg::Pin(c) => Some(c),
+            _ => None,
+        }
+    }
 }
 
 impl AtmController {
 
-    fn eject_card(&mut self) -> bool {
+    pub fn eject_card(&mut self) -> bool {
         // via hw API
         self.error_code = String::from("Some Error Code from HW");
         // OR
         true
     }
 
-    fn count_cash(&mut self) -> bool {
+    pub fn count_output_cash(&mut self) -> bool {
+        // using arg
+        self.requested_cash_output_amount;
         // via hw API
         self.error_code = String::from("Some Error Code from HW");
         // OR
         true
     }
 
-    fn eject_cash(&mut self) -> bool {
+    pub fn eject_cash(&mut self) -> bool {
         // via hw API
         self.error_code = String::from("Some Error Code from HW");
         // OR
         true
     }
 
-    fn event_received(&mut self, event: HwEvent) {
+    pub fn receive_event(&mut self, event: HwEvent, arg: HwEventArg) {
         match event {
             HwEvent::CardInserted => {
-                self.reset_user_interaction_timestamp();
                 self.state_machine.consume(&Input::CardInserted).unwrap();
+                self.pin = arg.pin().unwrap();
+                self.get_authentication();
             }
             HwEvent::CardEjected | HwEvent::CashCountSuccess | HwEvent::CashEjected => {
                 self.state_machine.consume(&Input::Successful).unwrap();
@@ -54,7 +73,9 @@ impl AtmController {
                     self.state_machine.consume(&Input::TargetCashAmountCounted).unwrap();
                 }
             }
-            _ => unreachable!()
+            HwEvent::UserInteractionTimeout => {
+                self.state_machine.consume(&Input::UserInteractionTimeout).unwrap();
+            }
         }
     }
 }
